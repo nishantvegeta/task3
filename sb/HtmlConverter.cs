@@ -115,23 +115,29 @@ class HtmlConverterProgram
                 }
 
                 string newLine = trimmedLine;
-                
+
                 // Line Breaks
                 newLine = Regex.Replace(newLine, @"\n\s*\n", "<br>");
 
                 // Convert Bold & Italic
-                newLine = Regex.Replace(newLine, @"\*\*\*(.+?)\*\*\*|___(.+?)___", "<b><i>$1$2</i></b>");
-                newLine = Regex.Replace(newLine, @"\*\*(.+?)\*\*|__(.+?)__", "<b>$1$2</b>");
-                newLine = Regex.Replace(newLine, @"\*(.+?)\*|_(.+?)_", "<i>$1$2</i>");
+                //newLine = Regex.Replace(newLine, @"\*\*\*(.+?)\*\*\*|___(.+?)___", "<b><i>$1$2</i></b>");
+                //newLine = Regex.Replace(newLine, @"\*\*(.+?)\*\*|__(.+?)__", "<b>$1$2</b>");
+                //newLine = Regex.Replace(newLine, @"\*(.+?)\*|_(.+?)_", "<i>$1$2</i>");
+                newLine = Regex.Replace(newLine, @"\*\*\*(.+?)\*\*\*", "<strong><em>$1</em></strong>");
+                newLine = Regex.Replace(newLine, @"___(.+?)___", "<strong><em>$1</em></strong>");
+                newLine = Regex.Replace(newLine, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
+                newLine = Regex.Replace(newLine, @"__(.+?)__", "<strong>$1</strong>");
+                newLine = Regex.Replace(newLine, @"\*(.+?)\*", "<em>$1</em>");
+                newLine = Regex.Replace(newLine, @"_(.+?)_", "<em>$1</em>");
 
                 // Inline Code
                 // To denote a word or phrase as code, enclose it in backticks (`).
                 newLine = Regex.Replace(newLine, @"`(.*?)`", "<code>$1</code>");
 
-                // [alt](url)
+                // image
                 newLine = Regex.Replace(newLine, @"!\[(.*?)\]\((.*?)\)", "<img src=\"$2\" alt=\"$1\">");
 
-                // [text](url)
+                // Links
                 newLine = Regex.Replace(newLine, @"\[(.*?)\]\((.*?)\)", "<a href=\"$2\">$1</a>");
 
                 // Handle Paragraphs
