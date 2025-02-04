@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 class Program
 {
-    static void Main(string[] args)
+    static void ExampleMethod()
     {
         StringBuilder sb = new StringBuilder();
 
