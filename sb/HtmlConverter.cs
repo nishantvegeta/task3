@@ -120,9 +120,6 @@ class HtmlConverterProgram
                 newLine = Regex.Replace(newLine, @"\n\s*\n", "<br>");
 
                 // Convert Bold & Italic
-                //newLine = Regex.Replace(newLine, @"\*\*\*(.+?)\*\*\*|___(.+?)___", "<b><i>$1$2</i></b>");
-                //newLine = Regex.Replace(newLine, @"\*\*(.+?)\*\*|__(.+?)__", "<b>$1$2</b>");
-                //newLine = Regex.Replace(newLine, @"\*(.+?)\*|_(.+?)_", "<i>$1$2</i>");
                 newLine = Regex.Replace(newLine, @"\*\*\*(.+?)\*\*\*", "<strong><em>$1</em></strong>");
                 newLine = Regex.Replace(newLine, @"___(.+?)___", "<strong><em>$1</em></strong>");
                 newLine = Regex.Replace(newLine, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
@@ -152,10 +149,6 @@ class HtmlConverterProgram
             File.WriteAllText(outputFilePath, html.ToString());
 
             Console.WriteLine($"HTML content has been saved to {outputFilePath}");
-        }
-        catch (FileNotFoundException)
-        {
-            Console.WriteLine("File not found.");
         }
         catch (Exception ex)
         {
