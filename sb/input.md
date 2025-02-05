@@ -30,11 +30,11 @@ ___bold and italic triple underscores___
 
 # Lists
 ## Unordered Lists
-- First item
-- Second item
+* First item
+* Second item
     - nested 1
     - nested 2
-- Third item
+* Third item
  
 - item 1
 - item 2

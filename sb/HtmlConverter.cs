@@ -7,26 +7,53 @@ class HtmlConverterProgram
 {
     static void Main(string[] args)
     {
-        string filePath = "input.md"; // Goes up two directories and then looks for input.md
+        string inputPath = "input.md"; // Path to the input Markdown file
+        string outputPath = "output.html";
+        
+        if (!File.Exists(inputPath))
+        {
+            Console.WriteLine("Input file not found.");
+            return;
+        }
+        
+        string markdownContent = File.ReadAllText(inputPath);
+        string htmlContent = ConvertMarkdownToHtml(markdownContent);
+        
+        File.WriteAllText(outputPath, htmlContent);
+        Console.WriteLine($"HTML content has been saved to {outputPath}");
+    }
 
+    static string ConvertMarkdownToHtml(string markdown)
+    {
         try
         {
-            // Reading all contents from file.md
-            string fileContent = File.ReadAllText(filePath);
-
             StringBuilder html = new StringBuilder();
 
             // Now Splitting the files when this character is encountered \n. Now lines are divided into array of strings
-            string[] lines = fileContent.Split(new[] { '\n' });
+            string[] lines = markdown.Split(new[] { '\n' });
 
             bool notInCodingBlock = true;
-            bool insideUnorderedList = false;
-            bool insideOrderedList = false;
+            Stack<string> listStack = new Stack<string>();
+            StringBuilder concatenatedLine = new StringBuilder();
 
-            foreach (string line in lines)
+            foreach (string originalline in lines)
             {
+                string line = originalline;
                 // Now trimming extra white spaces and tabs.
                 string trimmedLine = line.Trim(); // This will trim at the start and at the end too.
+
+                // Handle line continuation with backslash
+                if (trimmedLine.EndsWith("\\"))
+                {
+                    concatenatedLine.Append(trimmedLine.Substring(0, trimmedLine.Length - 1) + "<br>");
+                    continue;
+                }
+                else if (concatenatedLine.Length > 0)
+                {
+                    concatenatedLine.Append(trimmedLine);
+                    trimmedLine = concatenatedLine.ToString();
+                    concatenatedLine.Clear();
+                }
 
                 // Heading
                 Match headingMatch = Regex.Match(trimmedLine, @"^(#{1,6})\s+(.+)");
@@ -59,6 +86,7 @@ class HtmlConverterProgram
                     notInCodingBlock = !notInCodingBlock;
                     continue; // Go to next iteration
                 }
+
                 // While notInCodingBlock is false, add the code in HTML as it is.
                 if (!notInCodingBlock)
                 {
@@ -74,53 +102,47 @@ class HtmlConverterProgram
                     continue;
                 }
 
-                // List Detection: Unordered List (starts with - or *)
-                if (trimmedLine.StartsWith("- ") || trimmedLine.StartsWith("* "))
+                // Unordered List Detection
+                if (Regex.IsMatch(line, @"^(\s*)[-*]\s+"))
                 {
-                    if (!insideUnorderedList)
+                    int indentLevel = Regex.Match(line, @"^(\s*)").Groups[1].Value.Length / 4;
+                    while (listStack.Count > indentLevel)
+                    {
+                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
+                    }
+                    if (listStack.Count == 0 || listStack.Peek() != "ul")
                     {
                         html.Append("<ul>\n");
-                        insideUnorderedList = true;
+                        listStack.Push("ul");
                     }
-                    html.AppendFormat("<li>{0}</li>\n", trimmedLine.Substring(2).Trim());
+                    html.AppendFormat("<li>{0}</li>\n", line.TrimStart().Substring(2).Trim());
                     continue;
-                }
-                else
-                {
-                    if (insideUnorderedList)
-                    {
-                        html.Append("</ul>\n");
-                        insideUnorderedList = false;
-                    }
                 }
 
-                // Ordered List Detection (starts with number followed by period)
-                if (Regex.IsMatch(trimmedLine, @"^\d+\.\s"))
+                // Ordered List Detection
+                if (Regex.IsMatch(line, @"^(\s*)\d+\.\s"))
                 {
-                    if (!insideOrderedList)
+                    int indentLevel = Regex.Match(line, @"^(\s*)").Groups[1].Value.Length / 4; // 4 spaces per indent level
+                    while (listStack.Count > indentLevel)
+                    {
+                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
+                    }
+                    if (listStack.Count == 0 || listStack.Peek() != "ol")
                     {
                         html.Append("<ol>\n");
-                        insideOrderedList = true;
+                        listStack.Push("ol");
                     }
-                    html.AppendFormat("<li>{0}</li>\n", trimmedLine.Substring(trimmedLine.IndexOf(' ') + 1).Trim());
+                    html.AppendFormat("<li>{0}</li>\n", line.TrimStart().Substring(2).Trim());
                     continue;
-                }
-                else
-                {
-                    if (insideOrderedList)
-                    {
-                        html.Append("</ol>\n");
-                        insideOrderedList = false;
-                    }
                 }
 
                 string newLine = trimmedLine;
 
                 // Line Breaks
                 // newLine = Regex.Replace(newLine, @"\n\s*\n", "<br>");
-                if (newLine.EndsWith("\\"))
+                if (newLine.EndsWith("  "))
                 {
-                    newLine = newLine.Substring(0, newLine.Length - 1) + "<br>";
+                    newLine = newLine.Substring(0, newLine.Length - 2) + "<br>";
                 }
 
                 // Convert Bold & Italic
@@ -144,19 +166,27 @@ class HtmlConverterProgram
                 // Handle Paragraphs
                 if (!string.IsNullOrWhiteSpace(newLine))
                 {
+                    // Close any open lists before starting a new paragraph
+                    while (listStack.Count > 0)
+                    {
+                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
+                    }
                     html.AppendFormat("<p>{0}</p>\n", newLine);
                 }
             }
 
-            // Write the output HTML to file
-            string outputFilePath = "output.html"; // Path where you want to save the HTML file
-            File.WriteAllText(outputFilePath, html.ToString());
+            // Close any open tags
+            while (listStack.Count > 0)
+            {
+                html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
+            }
 
-            Console.WriteLine($"HTML content has been saved to {outputFilePath}");
+            return html.ToString();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error: {ex.Message}");
+            return string.Empty;
         }
     }
 }
