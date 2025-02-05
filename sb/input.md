@@ -11,7 +11,7 @@ This is a task which should be done.
 This is another one.
 
 # Line Breaks
-This is first line.  
+This is first line.\
 And this is second line.
 
 # Emphasis
@@ -23,9 +23,10 @@ __bold double underscores__
 ___bold and italic triple underscores___
 
 # Blockquotes
->Dorothy followed her through many of the beautiful rooms in her castle.
->hello
->Dorothy 
+> Dorothy followed her through many of the beautiful rooms in her castle.
+> hello
+> Dorothy 
+> asdasdasd
 
 # Lists
 ## Unordered Lists
@@ -33,7 +34,6 @@ ___bold and italic triple underscores___
 - Second item
     - nested 1
     - nested 2
-    - 3
 - Third item
  
 - item 1
@@ -50,7 +50,7 @@ ___bold and italic triple underscores___
 ## Mixed Lists
 1. Ordered item
     - Unordered item
-    - Another Unordered item
+    - Another Ordered item
 2. Another Ordered item
 
 # Code
@@ -59,7 +59,7 @@ Use `code` inside a sentence
 
 ## Block code
 ``` 
-This is code block. 
+This is code block.
 ```
 
 ```

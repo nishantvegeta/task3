@@ -117,7 +117,11 @@ class HtmlConverterProgram
                 string newLine = trimmedLine;
 
                 // Line Breaks
-                newLine = Regex.Replace(newLine, @"\n\s*\n", "<br>");
+                // newLine = Regex.Replace(newLine, @"\n\s*\n", "<br>");
+                if (newLine.EndsWith("\\"))
+                {
+                    newLine = newLine.Substring(0, newLine.Length - 1) + "<br>";
+                }
 
                 // Convert Bold & Italic
                 newLine = Regex.Replace(newLine, @"\*\*\*(.+?)\*\*\*", "<strong><em>$1</em></strong>");
