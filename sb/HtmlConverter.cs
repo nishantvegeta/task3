@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Text;
 using System.IO;
+using System.Collections.Generic;
 
 class HtmlConverterProgram
 {
@@ -55,6 +56,15 @@ class HtmlConverterProgram
                     concatenatedLine.Clear();
                 }
 
+                // Close any open lists before starting a new heading
+                if (Regex.IsMatch(trimmedLine, @"^(#{1,6})\s+(.+)"))
+                {
+                    while (listStack.Count > 0)
+                    {
+                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
+                    }
+                }
+
                 // Heading
                 Match headingMatch = Regex.Match(trimmedLine, @"^(#{1,6})\s+(.+)");
                 if (headingMatch.Success)
@@ -77,11 +87,11 @@ class HtmlConverterProgram
                 {
                     if (notInCodingBlock)
                     {
-                        html.Append("<code><pre>\n");
+                        html.Append("<pre><code>\n");
                     }
                     else
                     {
-                        html.Append("</pre></code>\n");
+                        html.Append("</code></pre>\n");
                     }
                     notInCodingBlock = !notInCodingBlock;
                     continue; // Go to next iteration
@@ -102,42 +112,42 @@ class HtmlConverterProgram
                     continue;
                 }
 
-                // // Unordered List Detection
-                // if (Regex.IsMatch(line, @"^(\s*)[-*]\s+"))
-                // {
-                //     int indentSpaces = Regex.Match(line, @"^(\s*)").Groups[1].Value.Length;
-                //     int indentLevel = indentSpaces / 4; // 4 spaces per indent level
+                // Unordered List Detection
+                if (Regex.IsMatch(line, @"^(\s*)[-*]\s+"))
+                {
+                    int indentSpaces = Regex.Match(line, @"^(\s*)").Groups[1].Value.Length;
+                    int indentLevel = indentSpaces / 4; // 4 spaces per indent level
             
-                //     while (listStack.Count > indentLevel)
-                //     {
-                //         html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
-                //     }
-                //     if (listStack.Count == 0 || listStack.Peek() != "ul")
-                //     {
-                //         html.Append("<ul>\n");
-                //         listStack.Push("ul");
-                //     }
-                //     html.AppendFormat("<li>{0}</li>\n", line.TrimStart().Substring(2).Trim());
-                //     continue;
-                // }
+                    while (listStack.Count > indentLevel)
+                    {
+                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
+                    }
+                    if (listStack.Count == 0 || listStack.Peek() != "ul")
+                    {
+                        html.Append("<ul>\n");
+                        listStack.Push("ul");
+                    }
+                    html.AppendFormat("<li>{0}</li>\n", line.TrimStart().Substring(2).Trim());
+                    continue;
+                }
 
-                // // Ordered List Detection
-                // if (Regex.IsMatch(line, @"^(\s*)\d+\.\s"))
-                // {
-                //     int indentSpaces = Regex.Match(line, @"^(\s*)").Groups[1].Value.Length; // 4 spaces per indent level
-                //     int indentLevel = indentSpaces / 4;
-                //     while (listStack.Count > indentLevel)
-                //     {
-                //         html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
-                //     }
-                //     if (listStack.Count == 0 || listStack.Peek() != "ol")
-                //     {
-                //         html.Append("<ol>\n");
-                //         listStack.Push("ol");
-                //     }
-                //     html.AppendFormat("<li>{0}</li>\n", line.TrimStart().Substring(2).Trim());
-                //     continue;
-                // }
+                // Ordered List Detection
+                if (Regex.IsMatch(line, @"^(\s*)\d+\.\s"))
+                {
+                    int indentSpaces = Regex.Match(line, @"^(\s*)").Groups[1].Value.Length; // 4 spaces per indent level
+                    int indentLevel = indentSpaces / 4;
+                    while (listStack.Count > indentLevel)
+                    {
+                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
+                    }
+                    if (listStack.Count == 0 || listStack.Peek() != "ol")
+                    {
+                        html.Append("<ol>\n");
+                        listStack.Push("ol");
+                    }
+                    html.AppendFormat("<li>{0}</li>\n", line.TrimStart().Substring(2).Trim());
+                    continue;
+                }
 
                 string newLine = trimmedLine;
 
@@ -169,20 +179,15 @@ class HtmlConverterProgram
                 // Handle Paragraphs
                 if (!string.IsNullOrWhiteSpace(newLine))
                 {
-                    // Close any open lists before starting a new paragraph
-                    while (listStack.Count > 0)
-                    {
-                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
-                    }
                     html.AppendFormat("<p>{0}</p>\n", newLine);
                 }
             }
 
-            // // Close any open tags
-            // while (listStack.Count > 0)
-            // {
-            //     html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
-            // }
+            // Close any open tags
+            while (listStack.Count > 0)
+            {
+                html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
+            }
 
             return html.ToString();
         }
