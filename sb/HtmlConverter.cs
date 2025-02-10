@@ -34,7 +34,9 @@ class HtmlConverterProgram
             string[] lines = markdown.Split(new[] { '\n' });
 
             bool notInCodingBlock = true;
-            Stack<string> listStack = new Stack<string>();
+            bool inUnorderedList = false;
+            bool inOrderedList = false;
+
             StringBuilder concatenatedLine = new StringBuilder();
 
             foreach (string originalline in lines)
@@ -56,19 +58,20 @@ class HtmlConverterProgram
                     concatenatedLine.Clear();
                 }
 
-                // Close any open lists before starting a new heading
-                if (Regex.IsMatch(trimmedLine, @"^(#{1,6})\s+(.+)"))
-                {
-                    while (listStack.Count > 0)
-                    {
-                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
-                    }
-                }
-
                 // Heading
                 Match headingMatch = Regex.Match(trimmedLine, @"^(#{1,6})\s+(.+)");
                 if (headingMatch.Success)
                 {
+                    if (inUnorderedList)
+                    {
+                        html.Append("</ul>\n");
+                        inUnorderedList = false;
+                    }
+                    if (inOrderedList)
+                    {
+                        html.Append("</ol>\n");
+                        inOrderedList = false;
+                    }
                     int level = headingMatch.Groups[1].Length; // Count of '#' determines heading level
                     string content = headingMatch.Groups[2].Value; // Extracted heading text
                     html.AppendFormat("<h{0}>{1}</h{0}>\n", level, content);
@@ -112,40 +115,29 @@ class HtmlConverterProgram
                     continue;
                 }
 
-                // Unordered List Detection
-                if (Regex.IsMatch(line, @"^(\s*)[-*]\s+"))
+                // Handle unordered lists
+                Match unorderedMatch = Regex.Match(trimmedLine, @"^[-*]\s+(.+)");
+                if (unorderedMatch.Success)
                 {
-                    int indentSpaces = Regex.Match(line, @"^(\s*)").Groups[1].Value.Length;
-                    int indentLevel = indentSpaces / 4; // 4 spaces per indent level
-            
-                    while (listStack.Count > indentLevel)
-                    {
-                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
-                    }
-                    if (listStack.Count == 0 || listStack.Peek() != "ul")
+                    if (!inUnorderedList)
                     {
                         html.Append("<ul>\n");
-                        listStack.Push("ul");
+                        inUnorderedList = true;
                     }
-                    html.AppendFormat("<li>{0}</li>\n", line.TrimStart().Substring(2).Trim());
+                    html.AppendFormat("<li>{0}</li>\n", unorderedMatch.Groups[1].Value);
                     continue;
                 }
 
-                // Ordered List Detection
-                if (Regex.IsMatch(line, @"^(\s*)\d+\.\s"))
+                // Handle ordered lists
+                Match orderedMatch = Regex.Match(trimmedLine, @"^\d+\.\s+(.+)");
+                if (orderedMatch.Success)
                 {
-                    int indentSpaces = Regex.Match(line, @"^(\s*)").Groups[1].Value.Length; // 4 spaces per indent level
-                    int indentLevel = indentSpaces / 4;
-                    while (listStack.Count > indentLevel)
-                    {
-                        html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
-                    }
-                    if (listStack.Count == 0 || listStack.Peek() != "ol")
+                    if (!inOrderedList)
                     {
                         html.Append("<ol>\n");
-                        listStack.Push("ol");
+                        inOrderedList = true;
                     }
-                    html.AppendFormat("<li>{0}</li>\n", line.TrimStart().Substring(2).Trim());
+                    html.AppendFormat("<li>{0}</li>\n", orderedMatch.Groups[1].Value);
                     continue;
                 }
 
@@ -176,6 +168,22 @@ class HtmlConverterProgram
                 // Links
                 newLine = Regex.Replace(newLine, @"\[(.*?)\]\((.*?)\)", "<a href=\"$2\">$1</a>");
 
+                // Close lists when an empty line is encountered
+                if (string.IsNullOrWhiteSpace(trimmedLine))
+                {
+                    if (inUnorderedList)
+                    {
+                        html.Append("</ul>\n");
+                        inUnorderedList = false;
+                    }
+                    if (inOrderedList)
+                    {
+                        html.Append("</ol>\n");
+                        inOrderedList = false;
+                    }
+                    continue; // Skip adding an empty paragraph
+                }
+
                 // Handle Paragraphs
                 if (!string.IsNullOrWhiteSpace(newLine))
                 {
@@ -184,11 +192,16 @@ class HtmlConverterProgram
             }
 
             // Close any open tags
-            while (listStack.Count > 0)
+            if (inUnorderedList)
             {
-                html.Append(listStack.Pop() == "ul" ? "</ul>\n" : "</ol>\n");
+                html.Append("</ul>\n");
+                inUnorderedList = false;
             }
-
+            if (inOrderedList)
+            {
+                html.Append("</ol>\n");
+                inOrderedList = false;
+            }
             return html.ToString();
         }
         catch (Exception ex)
