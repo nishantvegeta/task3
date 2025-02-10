@@ -54,14 +54,14 @@ And this is second line.
 
 1. First item
 2. Second item
-3. Third item
+3. Indented item
 4. Indented item
-5. Indented item
+5. Third item
 
 ## Mixed Lists
 
 1. Ordered item
-2. Unordered item
+2. Another Unordered item
 3. Another Ordered item
 4. Another Ordered item
 
