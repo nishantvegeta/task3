@@ -75,7 +75,7 @@ Use `code` inside a sentence
 
 ```plaintext
 This is code block.
-```plaintext
+```
 
 ```python
 #Python example
