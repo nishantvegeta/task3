@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Text;
 
 public static class StringExtensions
 {
@@ -25,7 +25,16 @@ public static class StringExtensions
     public static string GetVowels(this string s)
     {
         string vowels = "aeiouAEIOU";
-        return new string(s.Where(c => vowels.Contains(c)).ToArray());
+        StringBuilder sb = new StringBuilder();
+
+        foreach (char c in s)
+        {
+            if (vowels.Contains(c))
+            {
+                sb.Append(c);
+            }
+        }
+        return sb.ToString();
     }
 
     public static int Age(this DateTime dateOfBirth)
